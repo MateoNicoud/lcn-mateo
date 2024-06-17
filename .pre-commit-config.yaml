@@ -34,22 +34,22 @@ repos:
         language: python
   - repo: local
     hooks:
-      - id: docker-prettier
-        name: Run prettier with docker
-        entry: tmknom/prettier:latest -l
-        language: docker_image
-        files: "\\.(\
-          css|less|scss\
-          |graphql|gql\
-          |html\
-          |js|jsx\
-          |json\
-          |md|markdown|mdown|mkdn\
-          |mdx\
-          |ts|tsx\
-          |vue\
-          |yaml|yml\
-          )$"
+    #   - id: docker-prettier
+    #     name: Run prettier with docker
+    #     entry: tmknom/prettier:latest -l
+    #     language: docker_image
+    #     files: "\\.(\
+    #       css|less|scss\
+    #       |graphql|gql\
+    #       |html\
+    #       |js|jsx\
+    #       |json\
+    #       |md|markdown|mdown|mkdn\
+    #       |mdx\
+    #       |ts|tsx\
+    #       |vue\
+    #       |yaml|yml\
+    #       )$"
       - id: docker-lychee
         name: Run lychee on markdown files with docker
         entry: lycheeverse/lychee

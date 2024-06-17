@@ -1,15 +1,27 @@
 import { ROUTES } from "./constant.ts";
 
+let name = "Jarl" + Date.now();
+
 describe("register", () => {
   it("should call register API and jump to home page when submit a valid form", () => {
-    cy.intercept("POST", /users$/, { fixture: "user.json" }).as(
-      "registerRequest",
-    );
     cy.visit(ROUTES.REGISTER);
 
-    cy.get('[placeholder="Your Name"]').type("Jarl");
-    cy.get('[placeholder="Email"]').type("Jarl@example.com");
-    cy.get('[placeholder="Password"]').type("blancherive");
+    cy.get('[placeholder="Your Name"]').type(name);
+    cy.get('[placeholder="Email"]').type(name + "@example.com");
+    cy.get('[placeholder="Password"]').type(name);
+
+    cy.intercept("POST", /users$/, {
+      statusCode: 200,
+      body: {
+        user: {
+          email: name + "@example.com",
+          token: "fake-jwt-token",
+          username: name,
+          bio: "",
+          image: ""
+        }
+      }
+    }).as("registerRequest");
 
     cy.get('[type="submit"]').click();
 
@@ -18,6 +30,12 @@ describe("register", () => {
   });
 
   it("should display error message when submit the form that username already exist", () => {
+    cy.visit(ROUTES.REGISTER);
+
+    cy.get('[placeholder="Your Name"]').type(name);
+    cy.get('[placeholder="Email"]').type(name + "@example.com");
+    cy.get('[placeholder="Password"]').type(name);
+
     cy.intercept("POST", /users$/, {
       statusCode: 422,
       body: {
@@ -28,12 +46,6 @@ describe("register", () => {
       },
     }).as("registerRequest");
 
-    cy.visit(ROUTES.REGISTER);
-
-    cy.get('[placeholder="Your Name"]').type("Jarl");
-    cy.get('[placeholder="Email"]').type("Jarl@example.com");
-    cy.get('[placeholder="Password"]').type("blancherive");
-
     cy.get('[type="submit"]').click();
 
     cy.wait("@registerRequest");
@@ -42,19 +54,23 @@ describe("register", () => {
   });
 
   it("should not allow visiting register page when the user is logged in", () => {
-    cy.fixture("user.json").then((authResponse) => {
-      authResponse.user.username = "Jarl";
-      cy.intercept("POST", /users\/login$/, {
-        statusCode: 200,
-        body: authResponse,
-      }).as("loginRequest");
-    });
+    cy.intercept("POST", /users\/login$/, {
+      statusCode: 200,
+      body: {
+        user: {
+          email: name + "@example.com",
+          token: "fake-jwt-token",
+          username: name,
+          bio: "",
+          image: ""
+        }
+      }
+    }).as("loginRequest");
 
-    // click sign in button in home page
     cy.visit(ROUTES.LOGIN);
 
-    cy.get('[type="email"]').type("Jarl@example.com");
-    cy.get('[type="password"]').type("blancherive");
+    cy.get('[type="email"]').type(name + "@example.com");
+    cy.get('[type="password"]').type(name);
     cy.get('[type="submit"]').contains("Sign in").click();
 
     cy.wait("@loginRequest");
@@ -67,28 +83,33 @@ describe("register", () => {
 });
 
 describe("no_article", () => {
-  it('should display "No articles are here... yet." when Jarl has no articles', () => {
-    cy.fixture("user.json").then((authResponse) => {
-      authResponse.user.username = "Jarl";
-      cy.intercept("POST", /users\/login$/, {
-        statusCode: 200,
-        body: authResponse,
-      }).as("loginRequest");
-    });
+  it('should display "No articles are here... yet." when the user has no articles', () => {
+    cy.intercept("POST", /users\/login$/, {
+      statusCode: 200,
+      body: {
+        user: {
+          email: name + "@example.com",
+          token: "fake-jwt-token",
+          username: name,
+          bio: "",
+          image: ""
+        }
+      }
+    }).as("loginRequest");
 
-    cy.intercept("GET", "/articles?author=Jarl", {
+    cy.intercept("GET", `/articles?author=${name}`, {
       articles: [],
       articlesCount: 0,
     }).as("getArticles");
 
     cy.visit(ROUTES.LOGIN);
 
-    cy.get('[type="email"]').type("Jarl@example.com");
-    cy.get('[type="password"]').type("blancherive");
+    cy.get('[type="email"]').type(name + "@example.com");
+    cy.get('[type="password"]').type(name);
     cy.get('[type="submit"]').contains("Sign in").click();
 
     cy.wait("@loginRequest");
-    cy.visit("http://localhost:4137/#/profile/Jarl");
+    cy.visit(`http://localhost:4137/#/profile/${name}`);
 
     cy.contains("No articles are here... yet.");
   });
